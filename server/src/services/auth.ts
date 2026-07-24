@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query, run } from '../db';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'trading-bot-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '7d';
 
 export interface User {
@@ -30,6 +30,7 @@ export interface LoginResult {
 
 export async function register(data: RegisterData): Promise<LoginResult> {
   try {
+    if (!JWT_SECRET) return { success: false, error: 'Server authentication is not configured' };
     const { email, password } = data;
     const emailLower = email.trim().toLowerCase();
 
@@ -68,6 +69,7 @@ export async function register(data: RegisterData): Promise<LoginResult> {
 
 export async function login(email: string, password: string): Promise<LoginResult> {
   try {
+    if (!JWT_SECRET) return { success: false, error: 'Server authentication is not configured' };
     const emailLower = email.trim().toLowerCase();
 
     const users = await query<User>('SELECT * FROM users WHERE email = ?', [emailLower]);
@@ -94,6 +96,7 @@ export async function login(email: string, password: string): Promise<LoginResul
 }
 
 export function verifyToken(token: string): any {
+  if (!JWT_SECRET) return null;
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch {

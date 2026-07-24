@@ -69,8 +69,14 @@ class RiskManager:
         current_equity: float = 0.0,
     ) -> RiskCheckResult:
         """检查新订单是否符合风控要求"""
+        self.reset_daily_stats()
         if current_equity > 0:
             self._total_equity = current_equity
+
+        if size <= 0 or entry_price <= 0:
+            return RiskCheckResult(False, RiskLevel.HIGH, "订单数量和价格必须大于 0")
+        if side not in ("long", "short"):
+            return RiskCheckResult(False, RiskLevel.HIGH, "订单方向必须为 long 或 short")
 
         checks = [
             ("single_trade_loss", self._check_single_trade_loss),
@@ -139,11 +145,14 @@ class RiskManager:
 
         return RiskCheckResult(passed=True, reason="仓位大小检查通过")
 
-    def _check_total_exposure(self, **kwargs) -> RiskCheckResult:
+    def _check_total_exposure(self, entry_price: float, size: float, **kwargs) -> RiskCheckResult:
         """总风险敞口检查"""
-        total_exposure = sum(
+        existing_exposure = sum(
             pos.get("value", 0) for pos in self._open_positions.values()
         )
+        # The order being evaluated must be included; otherwise several rapid
+        # orders can each pass independently while exceeding the account limit.
+        total_exposure = existing_exposure + entry_price * size
         max_exposure = self._total_equity * self.config.max_total_exposure_pct
 
         if total_exposure > max_exposure:
@@ -262,6 +271,7 @@ class RiskManager:
         if stop_loss <= 0 or entry_price <= 0:
             return 0.0
 
+        risk_pct = min(max(risk_pct, 0.0), self.config.max_single_trade_loss_pct)
         risk_amount = self._total_equity * risk_pct
         price_diff = abs(entry_price - stop_loss)
 

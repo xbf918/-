@@ -261,7 +261,7 @@ router.get('/market/onchain', async (req, res) => {
 });
 
 // ========== 凭证管理 ==========
-router.get('/credentials', async (req, res) => {
+router.get('/credentials', authMiddleware, async (req, res) => {
   try {
     const result = await getCredentials();
     res.json(result);
@@ -270,7 +270,7 @@ router.get('/credentials', async (req, res) => {
   }
 });
 
-router.post('/credentials', async (req, res) => {
+router.post('/credentials', authMiddleware, async (req, res) => {
   try {
     const creds = req.body;
     if (!creds.exchange || !creds.apiKey || !creds.apiSecret) {
@@ -293,7 +293,7 @@ router.post('/credentials', async (req, res) => {
   }
 });
 
-router.delete('/credentials/:exchange', async (req, res) => {
+router.delete('/credentials/:exchange', authMiddleware, async (req, res) => {
   try {
     await deleteCredentials(req.params.exchange);
     res.json({ success: true, exchange: req.params.exchange });
@@ -302,7 +302,7 @@ router.delete('/credentials/:exchange', async (req, res) => {
   }
 });
 
-router.post('/credentials/test', async (req, res) => {
+router.post('/credentials/test', authMiddleware, async (req, res) => {
   try {
     const creds = req.body;
     if (!creds.exchange || !creds.apiKey || !creds.apiSecret) {
@@ -331,7 +331,7 @@ router.post('/credentials/test', async (req, res) => {
 });
 
 // ========== 账户和持仓（使用凭证管理的 API Key） ==========
-router.get('/account', async (req, res) => {
+router.get('/account', authMiddleware, async (req, res) => {
   try {
     const exchange = req.query.exchange as string;
     if (!exchange) {
@@ -344,7 +344,7 @@ router.get('/account', async (req, res) => {
   }
 });
 
-router.get('/positions', async (req, res) => {
+router.get('/positions', authMiddleware, async (req, res) => {
   try {
     const exchange = req.query.exchange as string;
     const symbol = req.query.symbol as string;
@@ -359,7 +359,7 @@ router.get('/positions', async (req, res) => {
 });
 
 // ========== 交易（使用凭证管理的 API Key） ==========
-router.post('/order', async (req, res) => {
+router.post('/order', authMiddleware, async (req, res) => {
   try {
     const { exchange, ...body } = req.body;
     if (!exchange) {
@@ -372,7 +372,7 @@ router.post('/order', async (req, res) => {
   }
 });
 
-router.post('/order/close', async (req, res) => {
+router.post('/order/close', authMiddleware, async (req, res) => {
   try {
     const { exchange, ...body } = req.body;
     if (!exchange) {
@@ -385,7 +385,7 @@ router.post('/order/close', async (req, res) => {
   }
 });
 
-router.post('/order/cancel', async (req, res) => {
+router.post('/order/cancel', authMiddleware, async (req, res) => {
   try {
     const { exchange, ...body } = req.body;
     if (!exchange) {
@@ -398,7 +398,7 @@ router.post('/order/cancel', async (req, res) => {
   }
 });
 
-router.post('/leverage', async (req, res) => {
+router.post('/leverage', authMiddleware, async (req, res) => {
   try {
     const { exchange, ...body } = req.body;
     if (!exchange) {
@@ -412,7 +412,7 @@ router.post('/leverage', async (req, res) => {
 });
 
 // ========== 原有 API（保留兼容性） ==========
-router.get('/account/:exchange', async (req, res) => {
+router.get('/account/:exchange', authMiddleware, async (req, res) => {
   try {
     const account = await getAccount(req.params.exchange as ExchangeId);
     res.json(account);
@@ -421,7 +421,7 @@ router.get('/account/:exchange', async (req, res) => {
   }
 });
 
-router.get('/positions/:exchange', async (req, res) => {
+router.get('/positions/:exchange', authMiddleware, async (req, res) => {
   try {
     const positions = await getPositions(req.params.exchange as ExchangeId, req.query.symbol as string);
     res.json(positions);
@@ -453,7 +453,7 @@ router.get('/candles/:exchange/:symbol', async (req, res) => {
   }
 });
 
-router.post('/trade/open', async (req, res) => {
+router.post('/trade/open', authMiddleware, async (req, res) => {
   try {
     const { exchange, symbol, direction, price, leverage } = req.body;
     const result = await openPosition(exchange as ExchangeId, symbol, direction, price, leverage);
@@ -463,7 +463,7 @@ router.post('/trade/open', async (req, res) => {
   }
 });
 
-router.post('/trade/close', async (req, res) => {
+router.post('/trade/close', authMiddleware, async (req, res) => {
   try {
     const { exchange, symbol, direction } = req.body;
     const result = await closePosition(exchange as ExchangeId, symbol, direction);
@@ -473,7 +473,7 @@ router.post('/trade/close', async (req, res) => {
   }
 });
 
-router.post('/trade/stop-loss-take-profit', async (req, res) => {
+router.post('/trade/stop-loss-take-profit', authMiddleware, async (req, res) => {
   try {
     const { exchange, symbol, side, stopLossPrice, takeProfitPrice, quantity } = req.body;
     const result = await setStopLossTakeProfit(
@@ -490,7 +490,7 @@ router.post('/trade/stop-loss-take-profit', async (req, res) => {
   }
 });
 
-router.post('/trade/cancel-sl-tp', async (req, res) => {
+router.post('/trade/cancel-sl-tp', authMiddleware, async (req, res) => {
   try {
     const { exchange, symbol } = req.body;
     const result = await cancelStopLossTakeProfit(exchange as ExchangeId, symbol);
@@ -500,7 +500,7 @@ router.post('/trade/cancel-sl-tp', async (req, res) => {
   }
 });
 
-router.post('/trade/partial-close', async (req, res) => {
+router.post('/trade/partial-close', authMiddleware, async (req, res) => {
   try {
     const { exchange, symbol, percent, direction } = req.body;
     const result = await partialClosePosition(exchange as ExchangeId, symbol, percent, direction);

@@ -4,10 +4,12 @@
 """
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+import os
 import time
 import uuid
 
 from ..data.ccxt_client import get_ccxt_client
+from ..config.settings import settings
 from ..utils.logger import logger
 from ..risk.risk_manager import RiskManager
 
@@ -47,14 +49,54 @@ class LiveTrader:
             if not self.client.exchange:
                 return {"status": "error", "msg": "交易所未连接"}
 
+            if side not in ("buy", "sell"):
+                return {"status": "error", "msg": "订单方向必须为 buy 或 sell"}
+            if order_type not in ("market", "limit") or amount <= 0:
+                return {"status": "error", "msg": "订单类型或数量无效"}
+            if order_type == "limit" and (price is None or price <= 0):
+                return {"status": "error", "msg": "限价单必须提供大于 0 的价格"}
+
+            params = params or {}
+            is_reduce_only = bool(params.get("reduceOnly") or params.get("reduce_only"))
+            # Production trading must be explicitly enabled. Testnet remains the
+            # default safe mode in settings.
+            if not settings.exchange.testnet and os.getenv("EXCHANGE_ALLOW_LIVE", "false").lower() != "true":
+                return {"status": "error", "msg": "实盘交易未启用；请设置 EXCHANGE_ALLOW_LIVE=true"}
+
+            reference_price = price
+            if reference_price is None:
+                ticker = self.client.exchange.fetch_ticker(symbol)
+                reference_price = ticker.get("last") or ticker.get("ask") or ticker.get("bid")
+            if not reference_price or reference_price <= 0:
+                return {"status": "error", "msg": "无法取得有效市场价格，拒绝下单"}
+
+            if not is_reduce_only:
+                stop_loss = float(params.get("stopLossPrice") or params.get("stop_loss") or 0)
+                take_profit = float(params.get("takeProfitPrice") or params.get("take_profit") or 0)
+                if stop_loss <= 0:
+                    return {"status": "error", "msg": "开仓必须设置止损价"}
+                risk_side = "long" if side == "buy" else "short"
+                balance = self.fetch_balance()
+                equity = 0.0
+                if balance["status"] == "ok":
+                    raw_balance = balance["balance"]
+                    equity = raw_balance.get("total", {}).get("USDT", 0) or raw_balance.get("USDT", {}).get("total", 0)
+                risk_check = self.risk_manager.check_new_order(
+                    symbol, risk_side, amount, float(reference_price), stop_loss, take_profit, equity
+                )
+                if not risk_check.passed:
+                    return {"status": "error", "msg": f"风控拒绝下单: {risk_check.reason}", "risk": risk_check.details}
+
             if order_type == "market":
-                order = self.client.exchange.create_market_order(symbol, side, amount, params=params or {})
+                order = self.client.exchange.create_market_order(symbol, side, amount, params=params)
             elif order_type == "limit":
-                order = self.client.exchange.create_limit_order(symbol, side, amount, price, params=params or {})
+                order = self.client.exchange.create_limit_order(symbol, side, amount, price, params=params)
             else:
                 return {"status": "error", "msg": f"不支持的订单类型: {order_type}"}
 
             logger.info(f"实盘下单: {side} {order_type} {amount} {symbol}")
+            if not is_reduce_only:
+                self.risk_manager.on_position_opened(symbol, {"value": float(reference_price) * amount})
             return {"status": "ok", "order": order}
 
         except Exception as e:
@@ -191,7 +233,11 @@ class LiveTrader:
             if amount <= 0:
                 return {"status": "error", "msg": "持仓数量为0"}
 
-            return self.place_order(symbol, side, "market", amount, params=params)
+            close_params = {**(params or {}), "reduceOnly": True}
+            result = self.place_order(symbol, side, "market", amount, params=close_params)
+            if result["status"] == "ok":
+                self.risk_manager.on_position_closed(symbol)
+            return result
 
         except Exception as e:
             logger.error(f"平仓失败: {e}")

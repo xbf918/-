@@ -7,7 +7,9 @@ import { exchangeProxyPlugin } from './vite-plugin-exchange';
 // https://vite.dev/config/
 export default defineConfig({
   build: {
-    sourcemap: 'hidden',
+    // Source maps substantially increase memory use during production builds.
+    // Keep them off for the constrained production server.
+    sourcemap: false,
   },
   server: {
     proxy: {

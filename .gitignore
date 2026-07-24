@@ -7,3 +7,9 @@ server/data/
 *.log
 *.tar.gz
 .email-config.json
+__pycache__/
+*.py[cod]
+*.db
+.pytest_cache/
+.coverage
+coverage/
