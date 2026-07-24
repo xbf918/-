@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  trading-bot:
+    build: .
+    container_name: trading-bot
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./server/data:/app/server/data
+      - ./.email-config.json:/app/.email-config.json
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=trading-bot-secret-key-change-in-production
+    restart: unless-stopped
+    depends_on:
+      - quant-engine
+
+  quant-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile.quant
+    container_name: quant-engine
+    ports:
+      - "8001:8001"
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8001
+      - EXCHANGE_NAME=binance
+      - EXCHANGE_TESTNET=true
+    restart: unless-stopped

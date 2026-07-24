@@ -1,0 +1,20 @@
+[Unit]
+Description=Trading Bot Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/trading-bot/server
+Environment=NODE_ENV=production
+Environment=PORT=3001
+Environment=DB_PATH=/root/trading-bot/server/data/trading.db
+ExecStart=/usr/bin/node /root/trading-bot/server/dist/index.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=trading-bot
+
+[Install]
+WantedBy=multi-user.target

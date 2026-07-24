@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y gcc g++ && rm -rf /var/lib/apt/lists/*
+
+COPY crypto_quant/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY crypto_quant ./crypto_quant
+
+EXPOSE 8001
+
+# 使用模块方式运行，让相对导入生效
+CMD ["python", "-m", "crypto_quant.main", "serve", "--host", "0.0.0.0", "--port", "8001"]

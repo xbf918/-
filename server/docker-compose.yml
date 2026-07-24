@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  trading-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trading-bot-server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DB_PATH=/app/data/trading.db
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env
+    networks:
+      - trading-network
+
+networks:
+  trading-network:
+    driver: bridge

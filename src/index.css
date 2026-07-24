@@ -1,0 +1,160 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background-color: #0a0e1a;
+  color: #e8eaf0;
+}
+
+body {
+  overflow: hidden;
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(0, 212, 255, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 85% 100%, rgba(255, 51, 102, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(0, 255, 136, 0.03) 0%, transparent 60%);
+}
+
+/* 自定义滚动条 - 极细赛博风 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.2);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.4);
+}
+
+@layer components {
+  /* 玻璃面板基础样式 */
+  .glass-panel {
+    @apply relative rounded-lg border border-panel-border bg-panel/80 backdrop-blur-md;
+    background-image: linear-gradient(180deg, rgba(26, 32, 48, 0.6) 0%, rgba(19, 24, 38, 0.85) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-panel-hover {
+    @apply transition-all duration-300;
+  }
+  .glass-panel-hover:hover {
+    border-color: rgba(0, 212, 255, 0.3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 32px rgba(0, 212, 255, 0.08);
+  }
+
+  /* 面板标题栏 */
+  .panel-header {
+    @apply flex items-center justify-between border-b border-panel-border px-4 py-2.5;
+  }
+  .panel-title {
+    @apply font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted;
+  }
+
+  /* 数据数字样式 */
+  .num {
+    @apply font-mono tabular-nums;
+  }
+
+  /* 信号标签 */
+  .signal-bull {
+    @apply text-neon-green;
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+  }
+  .signal-bear {
+    @apply text-neon-red;
+    text-shadow: 0 0 8px rgba(255, 51, 102, 0.5);
+  }
+  .signal-neutral {
+    @apply text-neon-cyan;
+  }
+
+  /* 角标装饰 - 赛博风四角 */
+  .cyber-corners::before,
+  .cyber-corners::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-color: rgba(0, 212, 255, 0.5);
+    pointer-events: none;
+  }
+  .cyber-corners::before {
+    top: -1px;
+    left: -1px;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+  .cyber-corners::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 1px solid;
+    border-right: 1px solid;
+  }
+}
+
+@layer utilities {
+  .text-glow-green {
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+  }
+  .text-glow-red {
+    text-shadow: 0 0 10px rgba(255, 51, 102, 0.6);
+  }
+  .text-glow-cyan {
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(0, 212, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 212, 255, 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .scan-line {
+    position: relative;
+    overflow: hidden;
+  }
+  .scan-line::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.6), transparent);
+    animation: scan 4s linear infinite;
+    pointer-events: none;
+  }
+}
+
+/* 隐藏 lightweight-charts TradingView 水印/logo（仅通过明确的类名匹配） */
+.tv-watermark,
+.tv-logo,
+.tv-brand,
+[class*="tradingview-logo"],
+[class*="tradingview-watermark"],
+[class*="trading-view-logo"],
+[class*="trading-view-watermark"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
